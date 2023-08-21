@@ -18,4 +18,5 @@ func NewApiServer(eng *gin.Engine) *ApiServer{
 func (ap *ApiServer) RunServer(){
 	ap.Router.GET("/subscribe", controllers.HandleReceiveMessage)
 	ap.Router.POST("/message", controllers.HandleSendMessage)
+	ap.Router.Run()
 }

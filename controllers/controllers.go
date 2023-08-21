@@ -5,11 +5,12 @@ import(
 	"github.com/Creatorjason/sse_go/models"
 	"net/http"
 	"fmt"
+	"time"
 )
 
 var (
 	messages []models.Message
-	clients chan []models.Message
+	clients []chan models.Message
 )
 
 
@@ -21,9 +22,9 @@ func HandleReceiveMessage(c *gin.Context){
 
 
 	for _, message := range messages{
-		c.Writer.Write([]byte(fmt.Sprintf("ID: %d\n", message.ID)))
+		c.Writer.Write([]byte(fmt.Sprintf("ID: %s\n", message.ID)))
 		c.Writer.Write([]byte(fmt.Sprintf("Sender: %s\n", message.Sender)))
-		c.Writer.Write([]byte(fmt.Sprintf("Text: %s\n", message.Text)))
+		c.Writer.Write([]byte(fmt.Sprintf("Message: %s\n", message.Text)))
 		c.Writer.Write([]byte(fmt.Sprintf("CreatedAt: %s\n", message.CreatedAt)))
 
 		c.Writer.Write([]byte("-----------------------\n"))
@@ -36,10 +37,10 @@ func HandleReceiveMessage(c *gin.Context){
 	for{
 		select{
 		case sseMsg :=  <- messageChan:
-			c.Writer.Write([]byte(fmt.Sprintf("ID: %d\n", sseMsg.ID)))
+			c.Writer.Write([]byte(fmt.Sprintf("ID: %s\n", sseMsg.ID)))
             c.Writer.Write([]byte(fmt.Sprintf("Sender: %s\n", sseMsg.Sender)))
             c.Writer.Write([]byte(fmt.Sprintf("Message: %s\n", sseMsg.Text)))
-            c.Writer.Write([]byte(fmt.Sprintf("Created Time: %s\n", sseMsg.CreateTime)))
+            c.Writer.Write([]byte(fmt.Sprintf("Created At: %s\n", sseMsg.CreatedAt)))
             c.Writer.Write([]byte("-----------------------\n"))
             c.Writer.Flush()
 		case <-c.Writer.CloseNotify():
@@ -55,19 +56,19 @@ func HandleSendMessage(c *gin.Context){
 	err := c.ShouldBind(&msg)
 	if err != nil{
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("invalid data format provided :%v", err.Error())
+			"error": fmt.Sprintf("invalid data format provided :%v", err.Error()),
 		})
 	}
 
-	msg.ID = len(message) + 1
+	msg.ID = fmt.Sprintf("%d",len(messages) + 1)
 	msg.CreatedAt = time.Now()
 	messages = append(messages, msg)
 
-	for _, sseChan := range client{
+	for _, sseChan := range clients{
 		sseChan <- msg
 	}
 
-	c.JSON(http.StatusOk, msg)
+	c.JSON(http.StatusOK, msg)
 
 }
 func removeClient(clients []chan models.Message, client chan models.Message) []chan models.Message {

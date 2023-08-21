@@ -26,6 +26,11 @@ func HandleSendMessage(c *gin.Context){
 			"error": fmt.Sprintf("invalid data format provided :%v", err.Error())
 		})
 	}
+
+	msg.ID = len(message) + 1
+	msg.CreatedAt = time.Now()
+	messages = append(messages, msg)
+
 	for _, sseChan := range client{
 		sseChan <- msg
 	}

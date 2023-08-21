@@ -1,6 +1,9 @@
-package model
+package models
 
-import "time"
+import (
+	"time"
+	
+)
 
 type Message struct {
 	ID        string    `json:"id"`
